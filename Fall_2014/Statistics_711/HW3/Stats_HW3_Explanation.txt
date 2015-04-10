@@ -1,0 +1,1 @@
+It appears as if the model does not represent the data exceptionally well. It appears as if the number of doctors visits is not normally distributed, exhibits strong positive skew and leptokurticity? Also outliers and stuff

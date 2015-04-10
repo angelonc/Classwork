@@ -1,0 +1,5 @@
+HW4: Fixed Effects Two-Way ANOVA
+
+A two-way fixed effects analysis of variance revealed no significant interaction effect of education and gender upon income. However, main effects analyses revealed significant effects of both education (F(1,18) = 10.97, p < .01) and gender (F(1,18) = 98.06, p < .001). Post-hoc Tukey HSD tests revealed that males and females who received college educations made at least $6,600 more on average than those without (adjusted p < .001). Additionally, it appeared that women made about $2,200 less per year than men (adjusted p < .01).
+
+Additionally, I was interested if there was an effect of gender on income after controlling for level of education. After partialling out educational level, there was still a significant effect of gender on income (t(20) = 2.60, p = .02).

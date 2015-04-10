@@ -1,0 +1,56 @@
+function MullerLyerExp
+% MullerLyerExp - Program to collect magnitude estimates for line length.
+%
+% Description:
+% Program to collect magnitude estimates for line length.
+% Parameters here are set for measuring the Muller-Lyer
+% illusion.
+%
+% The observer's task is to enter the judged magnitude of
+% each displayed line.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+% EXPERIMENTAL PARAMETERS
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% the total length of the figure will be line length plus arrow length
+% height of arrow length will be 20...
+%params.baseLength = 40;
+params.standardLength = 140;					   % Standard line length
+params.stimLengths = [100 140 180];                % Test lengths (pixels)
+params.stimAngles = [0];					       % Test angles (degrees re. horizontal)
+params.arrowLengths =  [40 40/sqrt(3)];			   % Arrowhead lengths (pixels)
+params.arrowAngles = [30 60 120 150];		       % Arrowhead angles (degrees re. inward)
+params.nBlocks = 4;						           % Number of blocks
+params.penSize = 4;								   % Line thickness (pixels)
+params.trialDuration = 1000;                       % Trial duration (milliseconds) ...
+params.startJitter = 0;                            
+												   % trialDuration = -1 means mouse click ends trial
+params.blankDuration = 10;				  	       % Time before response box goes up (millisecs);
+params.ITI = 100;								   % Intertrial interval (millisecs) 
+params.bgColor = [0 0 0];						   % Color of background (RGB, each between 0 and 1)
+params.lineColor = [1 1 1];	 	                   % Color of arrows (RGB, each between 0 and 1)
+params.arrowColor = [1 1 1];		               % Color of arrowheads (RGB, each between 0 and 1)
+
+params.jitterHPosition = 0; 					   % Vary horizontal line position trial to trial?
+params.jitterVPosition = 0; 					   % Vary vertical line position trial to trial?
+                                                   % 0 means no., nonzero gives
+                                                   % maximum number of pixels of shift
+                                                   % (left or right, up or down)
+                                        
+params.standardAlways = 0;						   % Show standard on every trial?
+params.standardDuration = 750;				       % If standard shown, duration
+params.standardITI = 200;						   % If standard shown, time to wait before line.
+
+params.experimenter = 'GroupC';                     % Experimenter
+params.experimentName = 'MullerLyer';			   % Root name of the experiment and data file.
+params.subject = 'subject17';					   % Name of the subject.
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% Call the actual experiment
+MagnitudeEstDrvr(params);
+
+% Gets rid of some Matlab syntax warnings.
+%#ok<*NBRAK>

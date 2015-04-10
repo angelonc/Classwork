@@ -1,0 +1,85 @@
+
+%%%%%%%%%%%%%%%%%%%
+% SEMANTIC STROOP %
+%%%%%%%%%%%%%%%%%%%
+
+QUESTION: Does stroop interference relate to representation of color during comprehension of color-related words? 
+
+PREDICTION: If stroop interference occurs on a conceptual level of color representation, then similar interference should occur during comprehension of color-related words. Further, this interference should be systematic, meaning that color-related words with the same color category should engender similar patterns of interferences
+
+METHOD: Use the stroop paradigm to collect interference measures (RT), and then use MDS to observe whether color-related words within the same color category engender similar patterns of interference (when paired with different ink colors) -- if similar patterns of interference, then should cluster in MDS plot. Can also quantitatively analyze by comparing correlations within- and between- category (off of a dissimilarity matrix, for example)
+
+Another way to state the goal: Trying to uncover color categories through similarity in patterns of stroop interference (the MDS analysis is blind to color category, it just has patterns of interference for the 24 words)
+
+%% COLOR CATEGORIES %%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+Colors used: RED, ORANGE, YELLOW, GREEN, BLUE, PURPLE
+- Would be easier using just four (RYGB), but would be less likely to find the effect we're looking for, 
+i.e. similar patterns of interference for color-related words within the same color category (because requires a range of 
+colors within which we can compare interference)
+
+
+%% WORDS %%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+RED: cherry, ruby, rose, blood
+ORANGE: apricot, tiger, carrots, tangerine
+YELLOW: banana, sun, lemon, canary
+GREEN: broccoli, lime, grass, emerald
+BLUE: denim, ocean, *sapphire, *sky
+PURPLE: plum, eggplant, *raisins, *lilac
+
+Word Sources
+Coutanche, M. N., & Thompson-Schill, S. L. (2014). Creating concepts from converging features in human cortex. Cerebral Cortex, bhu057.
+Hsu, N. S., Frankland, S. M., & Thompson-Schill, S. L. (2012). Chromaticity of color perception and object color knowledge. Neuropsychologia, 50(2), 327-333.
+Yee, E., Ahmed, S. Z., & Thompson-Schill, S. L. (2012). Colorless green ideas (can) prime furiously. Psychological science, 23(4), 364-369.
+* words not included in above references
+
+
+%% HUES %%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+Source: (Smithson et al. 2006)
+(Color)		(CIE x)		(CIE y)		(Luminance)
+RED		0.622		0.346		13.8
+ORANGE		0.538		0.413		37.2	
+YELLOW		0.423		0.505		65.5
+GREEN		0.280		0.617		42.3
+BLUE		0.152		0.076		6.9
+PURPLE*		mix blue and red?
+background     0.298	      0.335	     34.1
+
+
+%% DESIGN %%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+6 color-categories X 4 words X 6 hues = 144 trial-types
+- optimally 3 trials per subject = 432 trials, 3 blocks
+
+From Smithson et al (2006)
+- Target words presented in uppercase Arial font
+- Height of letters subtended a visual angle of 1.0 degrees from viewing distance of 1 meter
+- Words presented with a 200-ms ramped (raised-cosine) onset and remained visible until participant responded
+
+My thoughts
+- We should probably leave word up until response to maximize interference. Or would it maximize interference? There's probably an optimal duration of word presentation: long enough so that the word is definitely processed, but short enough that the participant can't use a color-matching strategy (that is, ignore the word after processing)
+- Height/visual angle of words is probably not important… also not sure of importance of "ramped" onset
+
+
+%% REFERENCES %% 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+(word source)
+Coutanche, M. N., & Thompson-Schill, S. L. (2014). Creating concepts from converging features in human cortex. Cerebral Cortex, bhu057.
+
+(word source)
+Hsu, N. S., Frankland, S. M., & Thompson-Schill, S. L. (2012). Chromaticity of color perception and object color knowledge. Neuropsychologia, 50(2), 327-333.
+
+(early attempt at stroop interference with color-related words)
+Klein, G. S. (1964). Semantic power measured through the interference of words with color-naming. The American journal of psychology, 576-588.
+
+(effect of color-word similarity on stroop, use of MDS)
+Klopfer, D. S. (1996). Stroop interference and color-word similarity. Psychological Science, 7(3), 150-157.
+
+(hue source) (color representations examined via reverse stroop)
+Smithson, H. E., Khan, S. S., Sharpe, L. T., & Stockman, A. (2006). Transitions between color categories mapped with a reverse Stroop task. Visual neuroscience, 23(3-4), 453-460.
+
+(word source)
+Yee, E., Ahmed, S. Z., & Thompson-Schill, S. L. (2012). Colorless green ideas (can) prime furiously. Psychological science, 23(4), 364-369.

@@ -1,0 +1,47 @@
+PAYOFF CURVES:
+
+The payoff curves I created do make sense. I will describe the effect
+that variation of each variable has on the curve (increasing the
+magnitude of each variable in the expected direction - negative for
+Misses and FA, positive for Hits and CR).
+
+VHit: Will shift the peak to the left ("incentivized" to have a lower
+threshold for saying "right" in signal trials to maximize hits)
+VCR: Will shift the peak to the right ("incentivized" to respond left
+in noise trials trials, increased threshold of saying right to minimize
+false alarms)
+VM: Will shift the peak leftward (to minimize misses, moving criterion
+to the left will reduce probability of a miss in signal trials)
+VFA: Shifts the peak rightward (to minimize false alarms in noise
+trials)
+p(Right): increasing pRight shifts the curve leftwards, I think to
+maximize hits and minimize false alarms in the signal
+trials. I suspect that increasing the probability of a rightward event
+will increase the probability of a False Alarm given a static
+criterion. Shifting it leftward will decrease that probability?
+
+
+
+D-PRIME
+
+The d' values calculated via Hits and False Alarms (using the zscores
+of these values) correspond perfectly with the d' values calculated
+for the raw dotCorr/dotSD values. These are expected to correspond as
+they are two ways of obtaining the same measurement and d' is not
+dependent on the criterion, so d' values for a range of HR and FAs
+will be identical as it is the normalized difference between ther two.
+
+
+
+P(CORRECT) PLOTS
+
+I can intuit that these curves are different because, from my
+experience, 2AFC tasks give a good baseline for comparison, so the
+internal question is not "is this left or right?", but "Is this more
+right than that?" I don't have a great idea why this occurrs
+mathematically, but to me it seems as if the opposing stumulus in the
+2AFC task represents a tangible criterion, whereas in each trial in
+the Y/N task there is a noisy internal criterion that may or may not
+be stable from trial to trial, causing Y/N performance to decrease.
+(I am not totally sure that I did Step 4 correctly, but the area under
+the ROC curves fit nicely to the AFC data, so I dunno).

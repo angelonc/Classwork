@@ -1,0 +1,4 @@
+sub block trial obj foil exp maze DP turn attend pos resp1 resp2 resp3 RT1 RT2 RT3 correct1 correct2 correct3
+99 1 01 v19 0 1 2 3 +1 1 +1 12 0 0 164.6009 00.0000 00.0000 0 0 0
+99 2 01 f17 1 0 0 0 +0 0 +0 12 0 0 00.6661 00.0000 00.0000 0 1 0
+99 3 01 f04 0 1 1 1 +1 0 +1 12 0 0 -0.5698 00.0000 00.0000 0 0 0

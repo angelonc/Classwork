@@ -1,0 +1,229 @@
+function MagnitudeEstDrvr(params)
+% MagnitudeEstDrvr - Magnitude estimation driver.
+%
+% Syntax:
+% MagnitudeEstDrvr(params)
+%
+% Description:
+% This is the part of the magnitude estimation
+% experiment that comes after the parameters have
+% been set.  It may be called from multiple versions
+% of parameter settings.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+% PROGRAM ITSELF
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%% Make sure 'params' was passed.
+if nargin ~= 1
+	error(help('MagnitudeEstDrvr'));
+end
+
+%% Seed the random number generator
+ClockRandSeed;
+
+%% Set convenience parameters
+nStimLengths = length(params.stimLengths);		% Number of test lengths
+nStimAngles = length(params.stimAngles);	    % Number of test angles
+nArrowLengths = length(params.arrowLengths);	% Number of arrow lengths
+nArrowAngles = length(params.arrowAngles);		% Number of arrow angles
+nIndVarCols = 4;
+nDataRows = nStimLengths*nStimAngles*nArrowLengths*nArrowAngles;
+nDataColumns = nIndVarCols + params.nBlocks;
+
+%% Create the data array.  Format is:
+%		Column 1: Stimulus lengths
+%		Column 2: Stimulus angles
+%		Column 3: Arrow lengths
+%		Column 4: Arrow angles
+%		Columns 5:(nBlocks+4): Subject's estimates
+%
+% On abort, any unfilled entries are still at -1.
+theData = -1*ones(nDataRows,nDataColumns);
+index = 1;
+for l = 1:nArrowAngles
+	for k = 1:nArrowLengths
+		for j = 1:nStimAngles
+			for i = 1:nStimLengths
+				theData(index,1) = params.stimLengths(i);
+				theData(index,2) = params.stimAngles(j);
+				theData(index,3) = params.arrowLengths(k);
+				theData(index,4) = params.arrowAngles(l);
+				index = index+1;
+			end
+		end
+	end
+end
+
+%% Open the experimental window.
+%
+% This creates a window object into which we can draw, and which can be
+% used to control the screen.  This program uses a simple drawing interface
+% that we call glWindow, and which is local to the Brainard Lab but
+% publically available to anyone who wants is.
+win = OpenEXPWindowME(params.bgColor);
+
+%% Run through the trials.
+%
+% Using the try/catch format allows us to close the window if there is an
+% error.
+try
+	% Enable character listening and clear out any characters that might be
+	% in the character buffer.
+	ListenChar(2);
+	FlushEvents;
+	
+	% Precompute line display points for each trial type that we are going to run.
+	for i = 1:nDataRows
+        % This call returns a structure that specifies where the end points of the lines we
+        % have to draw are.  We can then add horizontal and vertial jitter if we want to.  The
+        % call takes the line length, line orientation, arrow length, and arrow angle.
+        thisAngle = theData(i,2)+(randi(91,1)-46);
+		lineInfos(i) = PrecomputeLineME(theData(i,1), thisAngle, theData(i,3), theData(i,4)); %#ok<AGROW>
+        
+        % Optional randome jitter of horiztonal and vertical positions of the line.
+        % This code would be more elegant if the jitter were done in a subroutine.
+        %
+        % NOTE FOR IMPROVEMENT: The logic would be better if the jitter were done separately
+        % for each trial of the same type, rather than once in common for all trials of the same
+        % type.
+		if params.jitterHPosition > 0
+			theJitter = Ranint(2*params.jitterHPosition+1) - (params.jitterHPosition+1);
+
+			fieldNames = fieldnames(lineInfos(i));
+			for j = 1:length(fieldNames)
+				lineInfos(i).(fieldNames{j})(1) = lineInfos(i).(fieldNames{j})(1) + theJitter; %#ok<AGROW>
+			end
+		end
+		if (params.jitterVPosition > 0)
+			theJitter = Ranint(2*params.jitterVPosition+1) - (params.jitterVPosition+1);
+
+			fieldNames = fieldnames(lineInfos(i));
+			for j = 1:length(fieldNames)
+				lineInfos(i).(fieldNames{j})(2) = lineInfos(i).(fieldNames{j})(2) + theJitter; %#ok<AGROW>
+			end
+		end
+    end
+    
+    %% Precompute info for the standard line, which is not jittered, and
+    % show it once at the start of the experiment.
+	standardInfo = PrecomputeLineME(params.standardLength, 0, 0, 0);
+	ShowStandardME(win, params, standardInfo);
+	
+	%% Do the trials.
+    %
+    % Each block contains one trial of a given type. 
+    % Within each block, we shuffle all of the trial types so they come in
+    % a different random order between blocks.
+	for i = 1:params.nBlocks
+		% Shuffle trial types so that they come in random order within
+        % each block.
+		indices = Shuffle(1:nDataRows);
+		
+		% Do the trials
+		for j = 1:nDataRows
+			index = indices(j);
+			dataRow = index;
+			dataColumn = nIndVarCols + i;
+			
+			% Do a single trial and record the response.
+            %
+            % Handle subject requests for reshow of standard, reshow of trial,
+            % and aborting experiment.
+			trialDone = false;
+			while ~trialDone
+				% Show the trial and get the response
+                %
+                % NOTE FOR IMPROVEMENT: The precomputation and line drawing
+                % code does not take much care about whether the arrows overlap
+                % the line.  This means that the actual length of the displayed
+                % line may vary with arrow angle, arrow width, etc.  This is not
+                % ideal from the point of view of interpretting the data in terms
+                % of a perceptual effect.
+                %   a) You may want to use a rule to measure the displayed lines
+                %   to ensure that they are what you want.
+                %   b) You could consider modifying PrecomputeLineME and/or DoATrialME
+                %   to improve how the lines are drawn.
+                %
+                % NOTE FOR IMPROVEMENT.  Modifying the same routines should allow 
+                % drawing of shapes other than arrows, if you would like to do that.
+				response = DoATrialME(win, params, lineInfos(index), standardInfo);
+				
+				% Check for user options
+				%		-1: Abort experiment
+                %       -2: Show standard and reshow trial
+                %       -3:	Reshow trial
+				switch response
+                    % Abort
+					case -1
+						error('abort');
+					
+                    % Reshow standard (and then reshow trial)
+					case -2
+						ShowStandardME(win, params, standardInfo);
+						mglWaitSecs(0.3);
+					
+                    % Reshow trial
+					case -3
+						mglWaitSecs(0.3);
+					
+                    % Save response and indicate done with this trial.
+					otherwise
+						theData(dataRow,dataColumn) = response;
+						trialDone = true;
+				end
+				
+				% Wait intertrial interval
+				mglWaitSecs(params.ITI/1000);
+			end
+		end
+	end
+	
+	%% Make sure data folder exists
+    % 
+    % Then create the data file and write the data.
+	dataFolder = sprintf('%s/data/%s/%s/%s', fileparts(fileparts(which('MagEstClass'))), ...
+		params.experimenter, params.experimentName, params.subject);
+	if ~exist(dataFolder, 'dir')
+		mkdir(dataFolder);
+	end
+	
+	%% Write the data into a CSV file in the data folder.
+    %
+    % This uses a class called CSVFile which handles a number of the ugly details.
+    % When the object is created, the first argument is the filename and the second
+    % indicates whether it is OK to overwrite another file of the same name if it already
+    % exists.
+    dataFile = sprintf('%s/%s-%d.csv', dataFolder, params.experimentName, GetNextDataFileNumber(dataFolder, '.csv'));
+	c = CSVFile(dataFile, true);
+	dataColumns = {'Line Length', 'Line Angle', 'Arrow Length', 'Arrow Angle'};
+	for i = 1:params.nBlocks
+		dataColumns{end+1} = sprintf('Estimate %d', i); %#ok<AGROW>
+	end
+	for i = 1:length(dataColumns)
+		c = c.addColumn(dataColumns{i}, 'd');
+		c = c.setColumnData(dataColumns{i}, theData(:,i));
+	end
+	c.write;
+	
+	%% Close the experimental window and turn off character listening.
+	ListenChar(0);
+	win.close;
+
+%% If we are here, there was an error or the user aborted the experiment
+% 
+% Close up the experimental window and character grabbing, then exit.
+catch e
+	ListenChar(0);
+	win.close;
+	
+    % Distinguish between user abort and the program crashing,
+    % to maximize usefulness of the error message printed.
+	if strcmp(e.message, 'abort')
+		fprintf('- Experiment aborted.\n');
+	else
+		rethrow(e);
+	end
+end
