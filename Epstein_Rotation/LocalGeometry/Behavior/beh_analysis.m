@@ -72,13 +72,19 @@ nat_RT = grpstats(data(nat_idx,15),data(nat_idx,1));
 m1_RT = grpstats(data(m1_idx,16),data(m1_idx,1));
 m2_RT = grpstats(data(m2_idx,16),data(m2_idx,1));
 
+corr_idx = data(:,18) == 1;
+
 dp_data = [grpstats(data(att_idx & dp_idx,15), data(att_idx & dp_idx,1)); ...
            grpstats(data(nat_idx & dp_idx,15), data(nat_idx & dp_idx,1))];
 ndp_data = [grpstats(data(att_idx & ndp_idx,15), data(att_idx & ndp_idx,1)); ...
            grpstats(data(nat_idx & ndp_idx,15), data(nat_idx & ndp_idx,1))];
 [p,tbl,stats] = anova2([dp_data ndp_data],n);
 
-
+dp_data = [grpstats(data(att_idx & dp_idx & corr_idx,15), data(att_idx & dp_idx & corr_idx,1)); ...
+           grpstats(data(nat_idx & dp_idx & corr_idx,15), data(nat_idx & dp_idx & corr_idx,1))];
+ndp_data = [grpstats(data(att_idx & ndp_idx & corr_idx,15), data(att_idx & ndp_idx & corr_idx,1)); ...
+           grpstats(data(nat_idx & ndp_idx & corr_idx,15), data(nat_idx & ndp_idx & corr_idx,1))];
+[p,tbl,stats] = anova2([dp_data ndp_data],n);
 
 
 
