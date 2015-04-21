@@ -70,10 +70,14 @@ for i = 1:size(spikes,1)
     
     % Smooth and divide by sampling map to make place field map
     pf_map(:,:,i) = imfilter(f_map{i},G_kern) ./ s_map;
+    
+    % Find place field peak ("center")
+    tmp = max(max(pf_map(:,:,i)));
+    [pf_max(i,1),pf_max(i,2)] = find(pf_map(:,:,i) == tmp);
 end
 
 
-%% BAYESIAN RECONSTRUCTION
+%% RECONSTRUCTIONS
 disp('Reconstruction...');
 % Set up time bins (last 25%)
 
@@ -92,15 +96,25 @@ t_bin = zeros(n_bins,samps_per_bin);
 for t = 1:n_bins
     t_bin(t,:) = [((t-1) * samps_per_bin) + 1 :...
             ((t-1) * samps_per_bin) + samps_per_bin];
-
+    
+    %%keyboard
+    
+    %% POPULATION VECTOR
+    %%pop_loc(t) = a;
+    
+    
+    %% BAYESIAN
     % Continuity constraint around previous position
     if t == 1
         CC = ones(70,70);
     else
         % Centered on last position
-        Mu = [mean(x_test(t_bin(t-1,:))) mean(y_test(t_bin(t-1,:)))];
+        %Mu = [mean(x_test(t_bin(t-1,:)))
+        %mean(y_test(t_bin(t-1,:)))];
+        Mu = re_loc(t-1,:);
         % Width is present velocity
         Sigma = abs(mean(v_test(t_bin(t,:)))/params.binSize);
+        %CC = fspecial('gauss',[ceil(sigma).*7],sigma);
         if Sigma > 60
             Sigma = 20/2;
         elseif Sigma < 20

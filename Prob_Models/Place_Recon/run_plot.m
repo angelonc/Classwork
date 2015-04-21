@@ -30,15 +30,15 @@ for i = 1:n
     [x y] = ind2sub(size(post{i}),argmax_idx);
     if i <= tail
         
-        plot(loc(1:i,1),loc(1:i,2),'-g');
-        scatter(loc(i,1),loc(i,2),'g','filled');
+        plot(loc(1:i,2),loc(1:i,1),'-g');
+        scatter(loc(i,2),loc(i,1),'g','filled');
         
         plot(recon(1:i,2),recon(1:i,1),'-r');
         scatter(recon(i,2),recon(i,1),'r','filled');
         
     else
-        plot(loc(i-tail:i,1),loc(i-tail:i,2),'-g');
-        scatter(loc(i,1),loc(i,2),'g','filled');
+        plot(loc(i-tail:i,2),loc(i-tail:i,1),'-g');
+        scatter(loc(i,2),loc(i,1),'g','filled');
         
         plot(recon(i-tail:i,2),recon(i-tail:i,1),'-r');
         scatter(recon(i,2),recon(i,1),'r','filled');
