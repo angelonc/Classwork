@@ -1,6 +1,13 @@
 function run_plot
 % Run reconstruction
-[loc, recon, post] = place_recon;
+if ~exist('Recon_Data.mat','file'); 
+    [loc, recon, post, pv_recon] = place_recon;
+    save('Recon_Data.mat', 'loc','recon','post','pv_recon');
+else
+    load Recon_Data.mat
+end
+
+
 n = length(loc);
 dt = 1; % Time in seconds
 tail = 10;
@@ -14,12 +21,14 @@ map = [linspace(0,.7,64)' zeros(64,1) zeros(64,1)];
 colormap(map);
 
 % Make the video
-figure(1);
-xlim([1 70]);
-ylim([1 70]);
-set(gca,'Color',[0 0 0]);
+
 for i = 1:n
+    figure(1);
+    set(gca,'Color',[0 0 0]);
     cla
+    % Bayes
+    xlim([1 70]);
+    ylim([1 70]);
     hold on
     tmp = post{i};
     tmp(isnan(tmp)) = 0;
@@ -45,6 +54,33 @@ for i = 1:n
     end
     hold off
     pause(dt/10);
+    
+    figure(2);
+    set(gca,'Color',[0 0 0]);
+    cla
+    % Population Vector
+    xlim([1 70]);
+    ylim([1 70]);
+    hold on
+    
+    [~,argmax_idx] = max(post{i}(:));
+    [x y] = ind2sub(size(post{i}),argmax_idx);
+    if i <= tail
+        
+        plot(loc(1:i,2),loc(1:i,1),'-g');
+        scatter(loc(i,2),loc(i,1),'g','filled');
+        
+        plot(pv_recon(1:i,2),pv_recon(1:i,1),'-b');
+        scatter(pv_recon(i,2),pv_recon(i,1),'b','filled');
+        
+    else
+        plot(loc(i-tail:i,2),loc(i-tail:i,1),'-g');
+        scatter(loc(i,2),loc(i,1),'g','filled');
+        
+        plot(pv_recon(i-tail:i,2),pv_recon(i-tail:i,1),'-b');
+        scatter(pv_recon(i,2),pv_recon(i,1),'b','filled');
+    end
+    hold off
 end
 
 

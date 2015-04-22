@@ -1,4 +1,4 @@
-function [loc, re_loc, post] = place_recon;
+function [loc, re_loc, post, pv_loc] = place_recon;
 
 %% Bayesian Reconstruction of Spatial Location
 
@@ -92,15 +92,15 @@ spikes_test = spikes(:,~train_idx);
 %f_map = zeros(70,70,size(spikes,1));
 n = zeros(1,1,size(spikes,1));
 t_bin = zeros(n_bins,samps_per_bin);
+f_map = [];
 % For each time bin
 for t = 1:n_bins
+    disp(['Time ' num2str(t)]);
     t_bin(t,:) = [((t-1) * samps_per_bin) + 1 :...
             ((t-1) * samps_per_bin) + samps_per_bin];
     
-    %%keyboard
-    
-    %% POPULATION VECTOR
-    %%pop_loc(t) = a;
+    % Current location
+    loc(t,:) = [mean(x_test(t_bin(t,:)))*2 mean(y_test(t_bin(t,:)))*2];
     
     
     %% BAYESIAN
@@ -109,51 +109,85 @@ for t = 1:n_bins
         CC = ones(70,70);
     else
         % Centered on last position
-        %Mu = [mean(x_test(t_bin(t-1,:)))
-        %mean(y_test(t_bin(t-1,:)))];
-        Mu = re_loc(t-1,:);
+        %Mu = fliplr([mean(x_test(t_bin(t-1,:))) mean(y_test(t_bin(t-1,:)))]);
+        Mu = fliplr(re_loc(t-1,:)/2);
         % Width is present velocity
         Sigma = abs(mean(v_test(t_bin(t,:)))/params.binSize);
         %CC = fspecial('gauss',[ceil(sigma).*7],sigma);
         if Sigma > 60
-            Sigma = 20/2;
+            Sigma = 60;
         elseif Sigma < 20
-            Sigma = 10/2;
+            Sigma = 20;
         end
         Sigma = repmat(Sigma,1,2);
         CC = reshape(mvnpdf([X1(:) Y1(:)],Mu,Sigma),71,71);
-        CC = CC(1:end-1,1:end-1);
+        CC = CC(1:end-1,1:end-1) ./ sum(CC(:));
     end
    
     % Make an activity map
     for unit = 1:size(spikes,1)
         % Make an activity map for time interval
-        %f_map(:,:,unit) = genFiringFields(x_test(t_bin(t,:)),y_test(t_bin(t,:)), ...
-        %                                 spikes_test(unit,t_bin(t,:)),bins);
+        f_map(:,:,unit) = genFiringFields(x_test(t_bin(t,:)),y_test(t_bin(t,:)), ...
+                                          spikes_test(unit,t_bin(t,: ...
+                                                          )),bins);
+        f_map(:,:,unit) = imfilter(f_map(:,:,unit),G_kern);
+        
         % Get spike count per unit
         n(unit) = sum(spikes_test(unit,t_bin(t,:)));
         pf_power(:,:,unit) = pf_map(:,:,unit) .^ n(unit);
     end
-    
-    
-    loc(t,:) = [mean(x_test(t_bin(t,:)))*2 mean(y_test(t_bin(t,:)))*2];
+
     % Calculate posterior
     post{t} = CC .* p_map .* prod(pf_power,3) .* exp(-params.timeBin .* sum(pf_map,3));
     [~,argmax_idx] = max(post{t}(:));
     [re_loc(t,1),re_loc(t,2)] = ind2sub(size(post{t}),argmax_idx);
     
-% $$$     subplot(1,2,1)
+    %% POP VECTOR
+    for ii = 1:length(bins)-1
+        for jj = 1:length(bins) - 1
+            clear tmp;
+            tmp = corrcoef(squeeze(pf_map(ii,jj,:)),squeeze(f_map(ii,jj,:)));
+            corr_map(ii,jj) = tmp(2,1);
+        end
+    end
+    [~,argmax_idx] = max(corr_map(:));
+    [pv_loc(t,1),pv_loc(t,2)] = ind2sub(size(corr_map),argmax_idx);
+    
+
+% $$$     subplot(1,4,1)
+% $$$     plot(loc(t,2),loc(t,1),'o')
+% $$$     xlim([0 70])
+% $$$     ylim([0 70])
+% $$$     subplot(1,4,2)
 % $$$     imagesc(CC)
-% $$$     subplot(1,2,2)
+% $$$     subplot(1,4,3)
 % $$$     imagesc(post{t})
+% $$$     subplot(1,4,4)
+% $$$     imagesc(corr_map)
 % $$$     keyboard
-% $$$     
+    
 end
 
 
     
     
-    
+
+if 0
+    % Centered on last position
+    Mu = [mean(x_test(t_bin(t-1,:))) mean(y_test(t_bin(t-1,:)))];
+    % Width is present velocity
+    Sigma = abs(mean(v_test(t_bin(t,:)))/params.binSize);
+    %CC = fspecial('gauss',[ceil(sigma).*7],sigma);
+    if Sigma > 60
+        Sigma = 20/2;
+    elseif Sigma < 20
+        Sigma = 10/2;
+    end
+    Sigma = repmat(Sigma,1,2);
+    CC = reshape(mvnpdf([X1(:) Y1(:)],Mu,Sigma),71,71);
+    CC = CC(1:end-1,1:end-1);
+end
+
     
     
     
