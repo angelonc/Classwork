@@ -145,7 +145,8 @@ for t = 1:n_bins
     
     %% POP VECTOR
     warning off
-    if pv
+
+    if sum(n) > 0
         for ii = 1:length(bins)-1
             for jj = 1:length(bins) - 1
                 dist_map(ii,jj) = pdist([n(:)'; squeeze(f_map_s(ii,jj,:))'],'cosine');
@@ -153,21 +154,22 @@ for t = 1:n_bins
         end
         [~,argmax_idx] = min(dist_map(:));
         [pv_loc(t,1),pv_loc(t,2)] = ind2sub(size(dist_map),argmax_idx);
+    else
+        pv_loc(t,:) = pv_loc(t-1,:);
     end
-    
 
-%      ax = subplot(1,4,1);
-%      plot(loc(t,2),loc(t,1),'o');
-%      xlim([0 70])
-%      ylim([0 70])
-%      set(ax,'YDir','reverse');
-%      subplot(1,4,2)
-%      imagesc(CC)
-%      subplot(1,4,3)
-%      imagesc(post{t})
-%      subplot(1,4,4)
-%      imagesc(1 - dist_map)
-%      keyboard
+    ax = subplot(1,4,1);
+    plot(loc(t,2),loc(t,1),'o');
+    xlim([0 70])
+    ylim([0 70])
+    set(ax,'YDir','reverse');
+    subplot(1,4,2)
+    imagesc(CC)
+    subplot(1,4,3)
+    imagesc(post{t})
+    subplot(1,4,4)
+    imagesc(1 - dist_map)
+    keyboard
     
 end
 

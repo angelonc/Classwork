@@ -1,11 +1,27 @@
-function run_plot(pv)
+function run_plot(pv,human)
 % Run reconstruction
-if ~exist('Recon_Data.mat','file'); 
-    [loc, recon, post, recon_nocc, post_nocc, pv_recon] = place_recon(pv);
-    save('Recon_Data.mat', 'loc','recon','post','pv_recon','recon_nocc');
+
+if ~human
+    if ~exist('Recon_Data.mat','file'); 
+        [loc, recon, post, recon_nocc, post_nocc, pv_recon] = place_recon(pv);
+        save('Recon_Data.mat', 'loc','recon','post','pv_recon','recon_nocc');
+    else
+        load Recon_Data.mat
+    end
 else
-    load Recon_Data.mat
+    if ~exist('Recon_Data_Human.mat','file'); 
+        [loc, recon, post, recon_nocc, post_nocc, pv_recon, l, u] = place_recon_hu(pv);
+        save('Recon_Data_Human.mat', 'loc','recon','post', ...
+             'pv_recon','recon_nocc', 'l','u');
+    else
+        load Recon_Data_Human.mat 
+    end
+    
+    % Make new locations in bin space
+    loc = (loc - l) / (u - l) * 70;
 end
+
+
 
 
 n = length(loc);
@@ -30,7 +46,7 @@ for i = 1:n
     xlim([1 70]);
     ylim([1 70]);
     hold on
-    tmp = post{i};
+    tmp = post_nocc{i};
     tmp(isnan(tmp)) = 0;
     posterior = imfilter(tmp,G_kern);
     imagesc(posterior./sum(posterior(:)));
@@ -57,7 +73,7 @@ keyboard
 % Make the video
 map = [linspace(0,.7,64)' zeros(64,1) zeros(64,1)];
 colormap(map);
-figure(2);
+figure(1);
 title('Bayesian Reconstruction (Two Step)');
 set(gca,'Color',[0 0 0]);
 for i = 1:n
@@ -91,7 +107,7 @@ for i = 1:n
 end
 keyboard
 
-figure(3);
+figure(1);
 title('Population Vector Reconstruction');
 set(gca,'Color',[0 0 0]);
 for i = 1:length(pv_recon)
@@ -124,7 +140,7 @@ for i = 1:length(pv_recon)
 end
 
 keyboard
-figure(3)
+figure(2)
 bayes_err = sqrt((recon(:,1) - loc(:,1)).^2 + ...
                  (recon(:,2) - loc(:,2)).^2);
 bayes_nocc_err = sqrt((recon_nocc(:,1) - loc(:,1)).^2 + ...
@@ -142,6 +158,7 @@ set(gca,'XTick',[1 2 3]);
 set(gca,'XTickLabels',{'Bayes (2 Step)', 'Bayes (no CC)', 'Pop. Vector'});
 set(gca,'FontSize',16);
 
+keyboard
 
 
 

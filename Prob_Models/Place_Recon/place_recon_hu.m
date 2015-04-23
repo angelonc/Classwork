@@ -1,4 +1,4 @@
-function [loc, re_loc, post, re_loc_ncc, post_nocc, pv_loc] = place_recon_hu(pv);
+function [loc, re_loc, post, re_loc_ncc, post_nocc, pv_loc, l, u] = place_recon_hu(pv);
 
 %% Bayesian Reconstruction of Spatial Location
 
@@ -6,19 +6,21 @@ load delivery_subject1_session1.mat
 
 %% PREPROCESSING
 
+rescale = 36/1.7;
+
 % Extract relevant info
 x = [sessionData.behav.x];
 y = [sessionData.behav.y];
 sr = 1/sessionData.epochSize;
 
 % Calculate velocity
-v = [sessionData.behav.speed]; % moving = 1
+v = abs([0 diff(sqrt(x.^2 + y.^2))]); % vu/s
 
 % Align spikes
-spikes = sessionData.fr';
+spikes = sessionData.fr' ./ rescale;
 
 % Index still periods
-move_idx = v > 0;
+move_idx = v > .001;
 
 
 %% MAPS
@@ -34,7 +36,7 @@ edges{2} = bins;
 params.binSize = mean(diff(bins));
 
 % Make gaussian kernel
-sigma = (6 / 2*sqrt(2*log(2)))/params.binSize;
+sigma = (3 / 2*sqrt(2*log(2)))/params.binSize;
 G_kern = fspecial('gaussian',[7*ceil(sigma) 7*ceil(sigma)],sigma);
 
 
@@ -53,6 +55,7 @@ spikes_train = spikes(:,train_idx & move_idx);
 s_map = N(1:end-1,1:end-1) / sr; % Convert to seconds
 p_map = s_map / sum(s_map(:));
 s_map = imfilter(s_map,G_kern,'same');
+s_map(s_map == 0) = NaN;
 
 disp('Activity maps...');
 f_map = zeros(70,70,32);
@@ -64,10 +67,6 @@ for i = 1:size(spikes,1)
     
     % Smooth and divide by sampling map to make place field map
     pf_map(:,:,i) = f_map_s(:,:,i) ./ s_map;
-    
-    % Find place field peak ("center")
-    tmp = max(max(pf_map(:,:,i)));
-    [pf_max(i,1),pf_max(i,2)] = find(pf_map(:,:,i) == tmp);
 end
 
 
@@ -75,8 +74,9 @@ end
 disp('Reconstruction...');
 % Set up time bins (last 25%)
 
+params.timeBin = 1;
 samps_per_bin = round(sr * params.timeBin);
-n_bins = floor(length(ts(~train_idx))/30);
+n_bins = floor(length(x(~train_idx))/4);
 
 x_test = x(~train_idx); 
 y_test = y(~train_idx);
@@ -94,7 +94,7 @@ for t = 1:n_bins
             ((t-1) * samps_per_bin) + samps_per_bin];
     
     % Current location
-    loc(t,:) = [mean(x_test(t_bin(t,:)))*2 mean(y_test(t_bin(t,:)))*2];
+    loc(t,:) = [mean(x_test(t_bin(t,:))) mean(y_test(t_bin(t,:)))];
     
     
     %% BAYESIAN
@@ -104,24 +104,27 @@ for t = 1:n_bins
     else
         % Centered on last position
         %Mu = fliplr([mean(x_test(t_bin(t-1,:))) mean(y_test(t_bin(t-1,:)))]);
-        Mu = fliplr(re_loc(t-1,:)/2);
+        Mu = fliplr(re_loc(t-1,:));
+        pos = zeros(70,70);
+        pos(Mu(2),Mu(1)) = 1;
         % Width is present velocity
-        Sigma = abs(mean(v_test(t_bin(t,:)))/params.binSize);
-        %CC = fspecial('gauss',[ceil(sigma).*7],sigma);
-        if Sigma > 60
-            Sigma = 60;
-        elseif Sigma < 20
-            Sigma = 20;
+        Sigma = abs(mean(v_test(t_bin(t,:))))/params.binSize;
+        if Sigma < 1
+            Sigma = 1;
         end
-        Sigma = repmat(Sigma,1,2);
-        CC = reshape(mvnpdf([X1(:) Y1(:)],Mu,Sigma),71,71);
-        CC = CC(1:end-1,1:end-1) ./ sum(CC(:));
+        
+        kern = fspecial('gaussian',[ceil(Sigma).*7],Sigma);
+        CC = imfilter(pos,kern);
+
+%          Sigma = repmat(Sigma,1,2);
+%          CC = reshape(mvnpdf([X1(:) Y1(:)],Mu,Sigma),71,71);
+%          CC = CC(1:end-1,1:end-1) ./ sum(CC(:));
     end
    
     for unit = 1:size(spikes,1)
         % Make population vector
         n(unit) = sum(spikes_test(unit,t_bin(t,:)));
-        pf_power(:,:,unit) = pf_map(:,:,unit) .^ n(unit);
+        pf_power(:,:,unit) = (pf_map(:,:,unit) .^ n(unit));
     end
     
     post_nocc{t} = p_map .* prod(pf_power,3) .* exp(-params.timeBin .* sum(pf_map,3));
@@ -132,7 +135,7 @@ for t = 1:n_bins
     post{t} = CC .* p_map .* prod(pf_power,3) .* exp(-params.timeBin .* sum(pf_map,3));
     [~,argmax_idx] = max(post{t}(:));
     [re_loc(t,1),re_loc(t,2)] = ind2sub(size(post{t}),argmax_idx);
-    
+        
     
     %% POP VECTOR
     warning off
@@ -149,8 +152,8 @@ for t = 1:n_bins
 
 %      ax = subplot(1,4,1);
 %      plot(loc(t,2),loc(t,1),'o');
-%      xlim([0 70])
-%      ylim([0 70])
+%      xlim([l u])
+%      ylim([l u])
 %      set(ax,'YDir','reverse');
 %      subplot(1,4,2)
 %      imagesc(CC)
@@ -164,6 +167,50 @@ end
 
 
     
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+%% SUBFUNCTIONS
+    
+function [f_map] = genFiringFields(x,y,spikes,bins)
+
+n_bins = length(bins);
+f_map = zeros(n_bins-1,n_bins-1);
+for xx = 1:n_bins - 1
+    for yy = 1:n_bins - 1
+        x_bin = [bins(xx) bins(xx+1)];
+        y_bin = [bins(yy) bins(yy+1)];
+        
+        t_idx = (x > x_bin(1) & x <= x_bin(2)) & ...
+                (y > y_bin(1) & y <= y_bin(2));
+        
+        f_map(xx,yy) = sum(spikes(t_idx));
+    end
+end
+
+
     
 
 if 0
