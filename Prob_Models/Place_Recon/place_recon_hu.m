@@ -1,54 +1,46 @@
-function [loc, re_loc, post, re_loc_ncc, post_nocc, pv_loc] = place_recon(pv);
+function [loc, re_loc, post, re_loc_ncc, post_nocc, pv_loc] = place_recon_hu(pv);
 
 %% Bayesian Reconstruction of Spatial Location
 
-load Neutral_s1_d1.mat
+load delivery_subject1_session1.mat
 
 %% PREPROCESSING
 
 % Extract relevant info
-x = pos.rawX;
-y = pos.rawY;
-ts = pos.ts;
-
-% Calculate sample rate of position data
-sr = 1000/mean(diff(ts));
+x = [sessionData.behav.x];
+y = [sessionData.behav.y];
+sr = 1/sessionData.epochSize;
 
 % Calculate velocity
-v = [0 diff(sqrt(x.^2 + y.^2))*1000]; % cm/s
+v = [sessionData.behav.speed]; % moving = 1
 
 % Align spikes
-spikes = alignSpikeTimes(ts,unit);
+spikes = sessionData.fr';
 
 % Index still periods
-move_idx = abs(v) > params.minV;
+move_idx = v > 0;
 
 
 %% MAPS
 
 % Make bins
-bins = 0:params.binSize:35;
+u = ceil(max([max(x(:)) max(y(:))]));
+l = floor(min([min(x(:)) min(y(:))]));
+nBins = 71;
+bins = linspace(l,u,nBins);
 [X1,Y1] = meshgrid(bins,bins);
 edges{1} = bins;
 edges{2} = bins;
+params.binSize = mean(diff(bins));
 
 % Make gaussian kernel
-sigma = (params.fwhm / 2*sqrt(2*log(2)))/params.binSize;
+sigma = (6 / 2*sqrt(2*log(2)))/params.binSize;
 G_kern = fspecial('gaussian',[7*ceil(sigma) 7*ceil(sigma)],sigma);
 
-% Make circular mask
-cx = 35.5; cy = 35.5;
-r = 35.5;
-ix = 71;
-iy = 71;
-[mx,my]=meshgrid(-(cx-1):(ix-cx),-(cy-1):(iy-cy));
-c_mask=((mx.^2+my.^2)<=r^2);
-mask = +c_mask(1:end-1,1:end-1);
-mask(mask == 0) = nan;
 
 % Index training period (first 75%)
-train_idx = zeros(1,length(ts));
-train_idx(1:round(length(ts)*.75)) = 1;
+train_idx = zeros(1,length(x));
+train_idx(1:round(length(x)*.75)) = 1;
 train_idx = logical(train_idx);
 
 v_train = v(train_idx & move_idx);
@@ -59,9 +51,8 @@ spikes_train = spikes(:,train_idx & move_idx);
 % Make sampling and sampling probability map
 [N,C] = hist3([x_train' y_train'],'Edges',edges);
 s_map = N(1:end-1,1:end-1) / sr; % Convert to seconds
-p_map = s_map / sum(s_map(:)) .* mask;
+p_map = s_map / sum(s_map(:));
 s_map = imfilter(s_map,G_kern,'same');
-s_map = s_map .* mask;
 
 disp('Activity maps...');
 f_map = zeros(70,70,32);
@@ -197,87 +188,3 @@ if 0
 %       end
         %f_map(:,:,unit) = imfilter(f_map(:,:,unit),G_kern);
 end
-
-    
-    
-    
-    
-    
-    
-    
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-%% SUBFUNCTIONS
-    
-function [f_map] = genFiringFields(x,y,spikes,bins)
-
-n_bins = length(bins);
-f_map = zeros(n_bins-1,n_bins-1);
-for xx = 1:n_bins - 1
-    for yy = 1:n_bins - 1
-        x_bin = [bins(xx) bins(xx+1)];
-        y_bin = [bins(yy) bins(yy+1)];
-        
-        t_idx = (x > x_bin(1) & x <= x_bin(2)) & ...
-                (y > y_bin(1) & y <= y_bin(2));
-        
-        f_map(xx,yy) = sum(spikes(t_idx));
-    end
-end
-
-function [spike_idx] = alignSpikeTimes(ts,unit)
-
-fr_limit = .12; % Exclude cells that fire below 12Hz
-                % (50spikes/10min)
-dur = (ts(end) - ts(1)) / 1000; % Duration in seconds
-
-cell_cnt = 0;
-% For each cell
-for cell = 1:numel(unit)
-    % Only look at cells firing over .12Hz
-    if length(unit{cell})/dur > fr_limit
-        cell_cnt = cell_cnt + 1;
-        
-        % For each spike
-        spike_cnt = 0;
-        spike_idx(cell_cnt,:) = zeros(1,length(ts));
-        for s = 1:length(unit{cell})
-            [~,i] = min(abs(ts - unit{cell}(s)));
-            spike_idx(cell_cnt,i) = spike_idx(cell_cnt,i) + 1;
-        end
-    end
-end
-
-function [pf_idx] = findPlaceFields(p_map,params)
-    
-% Threshold the place map
-fr_thresh = max(p_map(:)) * params.minPFAct;
-area_thresh = params.minPFSize / params.binSize;
-p_map_thresh = p_map > fr_thresh;
-
-% Find connected regions
-CC = bwconncomp(p_map_thresh);
-
-% Extract fields greater than 80 cm-sq
-pf_cnt = 0;
-for j = 1:length(CC.PixelIdxList)
-    
-    if length(CC.PixelIdxList{j}) > area_thresh
-        pf_cnt = pf_cnt + 1;
-        pf_idx{pf_cnt} = CC.PixelIdxList{j};
-    end
-end
-        
