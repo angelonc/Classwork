@@ -1,7 +1,7 @@
-function run_plot
+function run_plot(pv)
 % Run reconstruction
 if ~exist('Recon_Data.mat','file'); 
-    [loc, recon, post, pv_recon] = place_recon;
+    [loc, recon, post, pv_recon] = place_recon(pv);
     save('Recon_Data.mat', 'loc','recon','post','pv_recon');
 else
     load Recon_Data.mat
@@ -21,10 +21,9 @@ map = [linspace(0,.7,64)' zeros(64,1) zeros(64,1)];
 colormap(map);
 
 % Make the video
-
+figure(1);
+set(gca,'Color',[0 0 0]);
 for i = 1:n
-    figure(1);
-    set(gca,'Color',[0 0 0]);
     cla
     % Bayes
     xlim([1 70]);
@@ -54,9 +53,10 @@ for i = 1:n
     end
     hold off
     pause(dt/10);
-    
-    figure(2);
-    set(gca,'Color',[0 0 0]);
+end
+figure(2);
+set(gca,'Color',[0 0 0]);
+for i = 1:length(pv_recon)
     cla
     % Population Vector
     xlim([1 70]);

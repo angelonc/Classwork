@@ -1,4 +1,4 @@
-function [loc, re_loc, post, pv_loc] = place_recon;
+function [loc, re_loc, post, pv_loc] = place_recon(pv);
 
 %% Bayesian Reconstruction of Spatial Location
 
@@ -93,6 +93,7 @@ spikes_test = spikes(:,~train_idx);
 n = zeros(1,1,size(spikes,1));
 t_bin = zeros(n_bins,samps_per_bin);
 f_map = [];
+pv_loc = [];
 % For each time bin
 for t = 1:n_bins
     disp(['Time ' num2str(t)]);
@@ -127,37 +128,43 @@ for t = 1:n_bins
     % Make an activity map
     for unit = 1:size(spikes,1)
         % Make an activity map for time interval
-        f_map(:,:,unit) = genFiringFields(x_test(t_bin(t,:)),y_test(t_bin(t,:)), ...
-                                          spikes_test(unit,t_bin(t,: ...
-                                                          )),bins);
-        f_map(:,:,unit) = imfilter(f_map(:,:,unit),G_kern);
+        if pv
+            f_map(:,:,unit) = genFiringFields(x_test(t_bin(t,:)),y_test(t_bin(t,:)), ...
+                                              spikes_test(unit,t_bin(t,: ...
+                                                              )), ...
+                                              bins);
+        end
+        %f_map(:,:,unit) = imfilter(f_map(:,:,unit),G_kern);
         
         % Get spike count per unit
         n(unit) = sum(spikes_test(unit,t_bin(t,:)));
         pf_power(:,:,unit) = pf_map(:,:,unit) .^ n(unit);
     end
-
+    
     % Calculate posterior
     post{t} = CC .* p_map .* prod(pf_power,3) .* exp(-params.timeBin .* sum(pf_map,3));
     [~,argmax_idx] = max(post{t}(:));
     [re_loc(t,1),re_loc(t,2)] = ind2sub(size(post{t}),argmax_idx);
     
     %% POP VECTOR
-    for ii = 1:length(bins)-1
-        for jj = 1:length(bins) - 1
-            clear tmp;
-            tmp = corrcoef(squeeze(pf_map(ii,jj,:)),squeeze(f_map(ii,jj,:)));
-            corr_map(ii,jj) = tmp(2,1);
+    if pv
+        for ii = 1:length(bins)-1
+            for jj = 1:length(bins) - 1
+                clear tmp;
+                tmp = corrcoef(squeeze(pf_map(ii,jj,:)),squeeze(f_map(ii,jj,:)));
+                corr_map(ii,jj) = tmp(2,1);
+            end
         end
+        [~,argmax_idx] = max(corr_map(:));
+        [pv_loc(t,1),pv_loc(t,2)] = ind2sub(size(corr_map),argmax_idx);
     end
-    [~,argmax_idx] = max(corr_map(:));
-    [pv_loc(t,1),pv_loc(t,2)] = ind2sub(size(corr_map),argmax_idx);
     
 
-% $$$     subplot(1,4,1)
-% $$$     plot(loc(t,2),loc(t,1),'o')
+% $$$     ax = subplot(1,4,1)
+% $$$     p1 = plot(loc(t,2),loc(t,1),'o')
 % $$$     xlim([0 70])
 % $$$     ylim([0 70])
+% $$$     set(ax,'YDir','reverse');
 % $$$     subplot(1,4,2)
 % $$$     imagesc(CC)
 % $$$     subplot(1,4,3)
