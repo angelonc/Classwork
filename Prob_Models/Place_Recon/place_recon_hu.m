@@ -28,15 +28,15 @@ move_idx = v > .001;
 % Make bins
 u = ceil(max([max(x(:)) max(y(:))]));
 l = floor(min([min(x(:)) min(y(:))]));
-nBins = 71;
-bins = linspace(l,u,nBins);
+nBins = 70;
+bins = linspace(l,u,nBins + 1);
 [X1,Y1] = meshgrid(bins,bins);
 edges{1} = bins;
 edges{2} = bins;
 params.binSize = mean(diff(bins));
 
 % Make gaussian kernel
-sigma = (3 / 2*sqrt(2*log(2)))/params.binSize;
+sigma = (12 / 2*sqrt(2*log(2)))/params.binSize;
 G_kern = fspecial('gaussian',[7*ceil(sigma) 7*ceil(sigma)],sigma);
 
 
@@ -109,12 +109,10 @@ for t = 1:n_bins
         pos(Mu(2),Mu(1)) = 1;
         % Width is present velocity
         Sigma = abs(mean(v_test(t_bin(t,:))))/params.binSize;
-        if Sigma < 1
-            Sigma = 1;
-        end
         
         kern = fspecial('gaussian',[ceil(Sigma).*7],Sigma);
         CC = imfilter(pos,kern);
+        keyboard
 
 %          Sigma = repmat(Sigma,1,2);
 %          CC = reshape(mvnpdf([X1(:) Y1(:)],Mu,Sigma),71,71);

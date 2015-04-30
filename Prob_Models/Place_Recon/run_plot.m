@@ -11,8 +11,8 @@ if ~human
 else
     if ~exist('Recon_Data_Human.mat','file'); 
         [loc, recon, post, recon_nocc, post_nocc, pv_recon, l, u] = place_recon_hu(pv);
-        save('Recon_Data_Human.mat', 'loc','recon','post', ...
-             'pv_recon','recon_nocc', 'l','u');
+        save('Recon_Data_Human.mat','loc','recon','post', ...
+             'pv_recon','recon_nocc','post_nocc','l','u');
     else
         load Recon_Data_Human.mat 
     end
@@ -150,10 +150,10 @@ povec_err = sqrt((pv_recon(:,1) - loc(:,1)).^2 + ...
 errorbar([mean(bayes_err/2) mean(bayes_nocc_err/2) mean(povec_err/2)], ...
          [std(bayes_err/2)/sqrt(n) std(bayes_nocc_err/2)/sqrt(n) std(bayes_err/2)/sqrt(n)],...
          'LineWidth',3);
-title('Error Comparison');
+title('Human Error Comparison');
 xlabel('Reconstruction Model');
 ylabel('Average Error (cm)');
-ylim([7 15]);
+ylim([7 25]);
 set(gca,'XTick',[1 2 3]);
 set(gca,'XTickLabels',{'Bayes (2 Step)', 'Bayes (no CC)', 'Pop. Vector'});
 set(gca,'FontSize',16);
