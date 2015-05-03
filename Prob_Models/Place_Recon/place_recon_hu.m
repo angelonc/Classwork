@@ -110,7 +110,7 @@ for t = 1:n_bins
         % Width is present velocity
         Sigma = abs(mean(v_test(t_bin(t,:))))/params.binSize;
         
-        kern = fspecial('gaussian',[ceil(Sigma).*7],Sigma);
+        kern = fspecial('gaussian',7*[ceil(Sigma) ceil(Sigma)],Sigma);
         CC = imfilter(pos,kern);
         keyboard
 

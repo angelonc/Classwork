@@ -1,4 +1,4 @@
-function [loc, re_loc, post, pv_loc] = place_recon(CC, );
+function [loc, re_loc, post, pv_loc] = place_recon_old(CC, );
 
 %% Bayesian Reconstruction of Spatial Location
 

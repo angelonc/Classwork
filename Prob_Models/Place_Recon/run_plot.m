@@ -4,7 +4,7 @@ function run_plot(pv,human)
 if ~human
     if ~exist('Recon_Data.mat','file'); 
         [loc, recon, post, recon_nocc, post_nocc, pv_recon] = place_recon(pv);
-        save('Recon_Data.mat', 'loc','recon','post','pv_recon','recon_nocc');
+        save('Recon_Data.mat', 'loc','recon','post','pv_recon','recon_nocc','post_nocc');
     else
         load Recon_Data.mat
     end
